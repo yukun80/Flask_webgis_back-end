@@ -1,4 +1,3 @@
-import random
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
@@ -8,6 +7,8 @@ from osgeo import gdal
 
 import rasterio
 import os
+
+
 from rasterio.windows import Window
 
 # from tqdm import tqdm
@@ -20,6 +21,7 @@ import optical_main_.Flask_predict as Flask_predict
 import LXY_InSAR_DL.Flask_InsarPredict as Flask_InsarPredict
 import ensemble_ML.Flask_fusionDetection as Flask_fusionDetection
 
+# os.add_dll_directory(r"C:\\ProgramData\\anaconda3\\envs\\py310\\Library\\bin")
 Flask_app = Flask(__name__)
 CORS(Flask_app)
 # app = Flask(__name__)
@@ -153,13 +155,9 @@ def process_and_slice_images(file_paths, output_folder):
             save_block(combined_block, profile_combined, i // block_size, j // block_size, output_folder)
 
 
-@Flask_app.route("/")
-def home():
-    return "Welcome to the Data Processing Application!"
-
-
 # 设置工作目录
 PATH_MAP = {"/default": "D:\\_codeProject\\SlideDetect-main\\DataCollection\\7_System"}
+# PATH_MAP = {"/default": "D:\\DisasterWebSys\\DataStorage"}
 
 
 def resolve_path(directory_path):
@@ -200,6 +198,7 @@ def list_layers():
     else:
         # 返回错误信息
         return jsonify({"error": layers_names}), status
+
 
 # 栅格转矢量
 @Flask_app.route("/tif2shp_calculate", methods=["POST"])
@@ -495,6 +494,11 @@ def delete_data():
         # 如果发生错误，返回错误信息
         print(e)  # 打印异常信息到控制台
         return jsonify({"error": str(e)}), 500
+
+
+@Flask_app.route("/")
+def home():
+    return "Welcome to the Data Processing Application!"
 
 
 if __name__ == "__main__":
