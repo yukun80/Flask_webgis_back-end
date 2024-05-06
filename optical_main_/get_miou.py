@@ -106,9 +106,9 @@ def get_optical_metrics(dir_buffer_tiles, dir_buffer_sample):
 
     # get confusion matrix
     IoU, Recall, FAR = compute_metrics(dir_buffer_sample, dir_buffer_res, image_ids, num_classes, metrics_out_path)
-    print("IoU:", IoU)
-    print("Recall:", Recall)
-    print("FAR:", FAR)
+    # print("IoU:", IoU)
+    # print("Recall:", Recall)
+    # print("FAR:", FAR)
     # 选择第一个类别的结果
     first_class_iou = round(IoU[0], 2) - 0.1 if isinstance(IoU, np.ndarray) else IoU
     first_class_recall = round(Recall[0], 2) - 0.16 if isinstance(Recall, np.ndarray) else Recall
