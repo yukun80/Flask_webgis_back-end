@@ -1,6 +1,7 @@
 import os
 from PIL import Image
-from tqdm import tqdm
+
+# from tqdm import tqdm
 from optical_main_.utils.utils_metrics import compute_metrics
 
 import numpy as np
@@ -38,7 +39,7 @@ def segment_image(dir_origin_path, dir_save_path):
     name_classes = ["background", "landslide"]
     unet = Unet()
     img_names = os.listdir(dir_origin_path)
-    for img_name in tqdm(img_names):
+    for img_name in img_names:
         if img_name.lower().endswith((".tif", ".tiff")):
             image_path = os.path.join(dir_origin_path, img_name)
             dataset = readTif(image_path)

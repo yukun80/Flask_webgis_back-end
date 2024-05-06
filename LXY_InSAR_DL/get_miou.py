@@ -1,6 +1,7 @@
 import os
 from PIL import Image
-from tqdm import tqdm
+
+# from tqdm import tqdm
 from LXY_InSAR_DL.utils.utils_metrics import compute_metrics
 
 import numpy as np
