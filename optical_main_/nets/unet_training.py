@@ -29,9 +29,7 @@ def Focal_Loss(inputs, target, cls_weights, num_classes=21, alpha=0.5, gamma=2):
     temp_inputs = inputs.transpose(1, 2).transpose(2, 3).contiguous().view(-1, c)
     temp_target = target.view(-1)
 
-    logpt = -nn.CrossEntropyLoss(weight=cls_weights, ignore_index=num_classes, reduction="none")(
-        temp_inputs, temp_target
-    )
+    logpt = -nn.CrossEntropyLoss(weight=cls_weights, ignore_index=num_classes, reduction="none")(temp_inputs, temp_target)
     pt = torch.exp(logpt)
     if alpha is not None:
         logpt *= alpha
@@ -60,6 +58,7 @@ def Dice_loss(inputs, target, beta=1, smooth=1e-5):
     dice_loss = 1 - torch.mean(score)
     return dice_loss
 
+
 def flatten_binary_scores(scores, labels, ignore=None):
     """
     Flattens predictions in the batch (binary case)
@@ -69,10 +68,11 @@ def flatten_binary_scores(scores, labels, ignore=None):
     labels = labels.view(-1)
     if ignore is None:
         return scores, labels
-    valid = (labels != ignore)
+    valid = labels != ignore
     vscores = scores[valid]
     vlabels = labels[valid]
     return vscores, vlabels
+
 
 def lovasz_grad(gt_sorted):
     """
@@ -88,6 +88,7 @@ def lovasz_grad(gt_sorted):
         p = jaccard[1:] - jaccard[:-1]
     return p
 
+
 def lovasz_hinge(logits, labels, ignore=None):
     """
     Binary Lovasz hinge loss
@@ -100,10 +101,10 @@ def lovasz_hinge(logits, labels, ignore=None):
 
     if len(labels) == 0:
         # only void pixels, the gradients should be 0
-        return logits.sum() * 0.
-    
-    signs = 2. * labels.float() - 1.
-    errors = (1. - logits * Variable(signs))
+        return logits.sum() * 0.0
+
+    signs = 2.0 * labels.float() - 1.0
+    errors = 1.0 - logits * Variable(signs)
     errors_sorted, perm = torch.sort(errors, dim=0, descending=True)
     gt_sorted = labels[perm]
     grad = lovasz_grad(gt_sorted)
@@ -188,7 +189,7 @@ def weights_init(net, init_type="kaiming", init_gain=0.02):
             torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
             torch.nn.init.constant_(m.bias.data, 0.0)
 
-    print("initialize network with %s type" % init_type)
+    # print("initialize network with %s type" % init_type)
     net.apply(init_func)
 
 
@@ -210,8 +211,7 @@ def get_lr_scheduler(
             lr = min_lr
         else:
             lr = min_lr + 0.5 * (lr - min_lr) * (
-                1.0
-                + math.cos(math.pi * (iters - warmup_total_iters) / (total_iters - warmup_total_iters - no_aug_iter))
+                1.0 + math.cos(math.pi * (iters - warmup_total_iters) / (total_iters - warmup_total_iters - no_aug_iter))
             )
         return lr
 

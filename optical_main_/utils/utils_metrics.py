@@ -36,7 +36,7 @@ def save_confusion_matrix(matrix, output_path):
         writer.writerow(["Predicted/Actual"] + [f"Class {i}" for i in range(matrix.shape[0])])
         for i in range(matrix.shape[0]):
             writer.writerow([f"Class {i}"] + list(matrix[i]))
-    print(f"Confusion matrix saved to {file_path}")
+    # print(f"Confusion matrix saved to {file_path}")
 
 
 def compute_metrics(gt_dir, pred_dir, png_name_list, num_classes, output_path=None):
@@ -50,7 +50,7 @@ def compute_metrics(gt_dir, pred_dir, png_name_list, num_classes, output_path=No
         label = np.array(Image.open(gt_path))
 
         if label.shape != pred.shape:
-            print("Skipping due to size mismatch:", pred_path, gt_path)
+            # print("Skipping due to size mismatch:", pred_path, gt_path)
             continue
 
         hist += fast_hist(label.flatten(), pred.flatten(), num_classes)

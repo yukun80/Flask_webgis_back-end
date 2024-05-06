@@ -258,9 +258,9 @@ def get_store_of_layer(
     """获取特定图层的存储名称和类型"""
     auth = HTTPBasicAuth(username, password)
     layer_url = f"{geoserver_rest_url}/layers/{layer_name}.json"
-    print("+++++++++++++++debug3:", layer_url)
+    # print("+++++++++++++++debug3:", layer_url)
     response = requests.get(layer_url, auth=auth)
-    print("+++++++++++++++debug4 response:", response.text)  # 打印完整响应内容
+    # print("+++++++++++++++debug4 response:", response.text)  # 打印完整响应内容
     if response.status_code == 200:
         layer_info = response.json()
         resource_href = layer_info["layer"]["resource"]["href"]
@@ -281,24 +281,24 @@ def get_store_of_layer(
 def delete_layer_and_store(
     layer_name, workspace, layer_class, geoserver_rest_url="http://localhost:8080/geoserver/rest", username="admin", password="geoserver"
 ):
-    print("+++++++++++++++debug2:", layer_name, workspace, layer_class, geoserver_rest_url, username, password)
+    # print("+++++++++++++++debug2:", layer_name, workspace, layer_class, geoserver_rest_url, username, password)
     # 为请求设置基本认证
     auth = HTTPBasicAuth(username, password)
     store_name, store_type = get_store_of_layer(layer_name, workspace, layer_class, geoserver_rest_url, username, password)
-    print("+++++++++++++++debug6:", store_name, store_type)
+    # print("+++++++++++++++debug6:", store_name, store_type)
     # 删除图层
     if layer_class not in ["featureType", "coverage"]:
         raise ValueError("Invalid layer class provided. Choose from 'layers', 'featuretypes', or 'coverages'.")
 
     layer_url = f"{geoserver_rest_url}/workspaces/{workspace}/layers/{layer_name}"
-    print("+++++++++++++++debug7:", layer_url)
+    # print("+++++++++++++++debug7:", layer_url)
     delete_layer_response = requests.delete(layer_url, auth=auth)
     if delete_layer_response.status_code not in [200, 202, 204]:
         raise Exception(f"Failed to delete layer: {delete_layer_response.text}")
 
     # 删除存储
     store_url = f"{geoserver_rest_url}/workspaces/{workspace}/{store_type}/{store_name}"
-    print("+++++++++++++++debug7:", store_url)
+    # print("+++++++++++++++debug7:", store_url)
     delete_store_response = requests.delete(store_url + "?recurse=true", auth=auth)
     if delete_store_response.status_code not in [200, 202, 204]:
         raise Exception(f"Failed to delete store: {delete_store_response.text}")

@@ -118,7 +118,7 @@ class DeeplabV3(object):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.net.load_state_dict(torch.load(self.model_path, map_location=device))
         self.net = self.net.eval()
-        print("{} model, and classes loaded.".format(self.model_path))
+        # print("{} model, and classes loaded.".format(self.model_path))
         if not onnx:
             if self.cuda:
                 self.net = nn.DataParallel(self.net)
@@ -180,18 +180,18 @@ class DeeplabV3(object):
         # ---------------------------------------------------------#
         if count:
             classes_nums = np.zeros([self.num_classes])
-            total_points_num = orininal_h * orininal_w
-            print("-" * 63)
-            print("|%25s | %15s | %15s|" % ("Key", "Value", "Ratio"))
-            print("-" * 63)
+            # total_points_num = orininal_h * orininal_w
+            # print("-" * 63)
+            # print("|%25s | %15s | %15s|" % ("Key", "Value", "Ratio"))
+            # print("-" * 63)
             for i in range(self.num_classes):
                 num = np.sum(pr == i)
-                ratio = num / total_points_num * 100
-                if num > 0:
-                    print("|%25s | %15s | %14.2f%%|" % (str(name_classes[i]), str(num), ratio))
-                    print("-" * 63)
+                # ratio = num / total_points_num * 100
+                # if num > 0:
+                # print("|%25s | %15s | %14.2f%%|" % (str(name_classes[i]), str(num), ratio))
+                # print("-" * 63)
                 classes_nums[i] = num
-            print("classes_nums:", classes_nums)
+            # print("classes_nums:", classes_nums)
 
         if self.mix_type == 0:
             # seg_img = np.zeros((np.shape(pr)[0], np.shape(pr)[1], 3))
@@ -299,7 +299,7 @@ class DeeplabV3(object):
         output_layer_names = ["output"]
 
         # Export the model
-        print(f"Starting export with onnx {onnx.__version__}.")
+        # print(f"Starting export with onnx {onnx.__version__}.")
         torch.onnx.export(
             self.net,
             im,
@@ -321,12 +321,12 @@ class DeeplabV3(object):
         if simplify:
             import onnxsim
 
-            print(f"Simplifying with onnx-simplifier {onnxsim.__version__}.")
+            # print(f"Simplifying with onnx-simplifier {onnxsim.__version__}.")
             model_onnx, check = onnxsim.simplify(model_onnx, dynamic_input_shape=False, input_shapes=None)
             assert check, "assert check failed"
             onnx.save(model_onnx, model_path)
 
-        print("Onnx model save as {}".format(model_path))
+        # print("Onnx model save as {}".format(model_path))
 
     def get_miou_png(self, image):
         orininal_h = image.shape[0]

@@ -17,6 +17,7 @@ import LXY_InSAR_DL.Flask_InsarPredict as Flask_InsarPredict
 import ensemble_ML.Flask_fusionDetection as Flask_fusionDetection
 from optical_main_.get_miou import get_optical_metrics
 from LXY_InSAR_DL.get_miou import get_insar_metrics
+from ensemble_ML.get_miou import get_ensemble_metrics
 
 Flask_app = Flask(__name__)
 CORS(Flask_app)
@@ -34,19 +35,19 @@ def process_sentinel_image_nan(file_path):
         print(f"Unable to open file {file_path}")
         return
 
-    print(dataset.RasterCount)
+    # print(dataset.RasterCount)
     result_info = {"file_path": file_path, "bands_processed": []}
     for band in range(1, dataset.RasterCount + 1):
         raster_band = dataset.GetRasterBand(band)
         nodata_value = raster_band.GetNoDataValue()  # 获取 NoData 值
-        print("nodata_value:", nodata_value)
+        # print("nodata_value:", nodata_value)
         data = raster_band.ReadAsArray().astype(float)  # 读取波段数据
 
         # 如果存在 NoData 值，将其转换为 NaN，然后将所有NaN值设置为0
         if nodata_value is not None:
             data[data == nodata_value] = np.nan
 
-        print(data.shape)
+        # print(data.shape)
         # 直接将所有NaN值设置为0
         data[np.isnan(data)] = 0
         print(f"Band {band}: NaN or NoData values processed. Setting NaNs to zero...")
@@ -228,7 +229,7 @@ def tif2shp_calculate():
         # print("+++++++++++++++debug1 resolved_tifImage:", resolved_tifImage, "\n")
         # print("+++++++++++++++debug2 resolved_res_folder:", resolved_res_folder, "\n")
         # print("+++++++++++++++debug3 result_path:", result_path, "\n")
-        print("+++++++++++++++debug4 threshold:", threshold, "\n")
+        # print("+++++++++++++++debug4 threshold:", threshold, "\n")
         # 生成矢量边界
         Flask_tif2shp.extract_and_sort_vector_boundary(resolved_tifImage, threshold, result_path, tifType)
 
@@ -310,8 +311,8 @@ def predict_images():
         clear_folder(predict_tiles_path)
 
         layer_name, extension = os.path.splitext(result_name)
-        print(layer_name + "_debug")
-        print(result_path + "_debug2")
+        # print(layer_name + "_debug")
+        # print(result_path + "_debug2")
 
         (
             store_status,
@@ -319,16 +320,16 @@ def predict_images():
             layer_status,
             layer_msg,
         ) = Flask_geoserver.upload_to_geoserver(result_path, layer_name, layer_name)
-        print(store_status, store_msg, layer_status, layer_msg)
+        # print(store_status, store_msg, layer_status, layer_msg)
 
         # 指定图层样式
         # 上传成功，指定样式1
         # random_num = random.randint(1, 6)
         random_num = 1
         style_name = f"ResultStyle_{random_num}"
-        print("debug" + style_name)
+        # print("debug" + style_name)
         style_status_code, style_msg = Flask_geoserver.assign_style_to_layer(layer_name, style_name)
-        print("style_status", style_status_code, style_msg)
+        # print("style_status", style_status_code, style_msg)
         # 返回成功响应
         return jsonify({"message": "Success"}), 200
     except Exception as e:
@@ -354,8 +355,8 @@ def predict_insar():
         result_path = os.path.join(resolved_res_path, result_name)
 
         layer_name, extension = os.path.splitext(result_name)
-        print(layer_name + "_debug")
-        print(result_path + "_debug2")
+        # print(layer_name + "_debug")
+        # print(result_path + "_debug2")
 
         (
             store_status,
@@ -363,16 +364,16 @@ def predict_insar():
             layer_status,
             layer_msg,
         ) = Flask_geoserver.upload_to_geoserver(result_path, layer_name, layer_name)
-        print(store_status, store_msg, layer_status, layer_msg)
+        # print(store_status, store_msg, layer_status, layer_msg)
 
         # 指定图层样式
         # 上传成功，随机指定一个样式
         # random_num = random.randint(1, 6)
         random_num = 2
         style_name = f"ResultStyle_{random_num}"
-        print("debug" + style_name)
+        # print("debug" + style_name)
         style_status_code, style_msg = Flask_geoserver.assign_style_to_layer(layer_name, style_name)
-        print("style_status", style_status_code, style_msg)
+        # print("style_status", style_status_code, style_msg)
         # 返回成功响应
         return jsonify({"message": "Success"}), 200
     except Exception as e:
@@ -405,24 +406,23 @@ def predict_multiResult():
 
         result_path = os.path.join(resolved_res_path, result_name)
         layer_name, extension = os.path.splitext(result_name)
-        print(layer_name + "_debug")
-        print(result_path + "_debug2")
-
+        # print(layer_name + "_debug")
+        # print(result_path + "_debug2")
         (
             store_status,
             store_msg,
             layer_status,
             layer_msg,
         ) = Flask_geoserver.upload_to_geoserver(result_path, layer_name, layer_name)
-        print(store_status, store_msg, layer_status, layer_msg)
+        # print(store_status, store_msg, layer_status, layer_msg)
         # 指定图层样式
         # 上传成功，随机指定一个样式
         # random_num = random.randint(1, 6)
         random_num = 3
         style_name = f"ResultStyle_{random_num}"
-        print("debug" + style_name)
+        # print("debug" + style_name)
         style_status_code, style_msg = Flask_geoserver.assign_style_to_layer(layer_name, style_name)
-        print("style_status", style_status_code, style_msg)
+        # print("style_status", style_status_code, style_msg)
         # 返回成功响应
         return jsonify({"message": "Success"}), 200
     except Exception as e:
@@ -485,7 +485,7 @@ def delete_data():
     try:
         # 可以在这里调用删除函数，并处理可能的异常或错误
         logOutput = Flask_geoserver.delete_layer_and_store(layer_name, workspace, layerClass)
-        print("+++++++++++++++debug1:", logOutput)
+        print("log:", logOutput)
         return jsonify({"success": f"Layer and store {layer_name} in workspace {workspace} have been deleted"}), 200
     except Exception as e:
         # 如果发生错误，返回错误信息
@@ -508,7 +508,9 @@ def get_metrics():
     elif radio1 == 2:
         print("radio1:", radio1)
         metrics = get_insar_metrics(resolved_buffer_tiles, resolved_buffer_sample)
-
+    elif radio1 == 3:
+        print("radio1:", radio1)
+        metrics = get_ensemble_metrics(resolved_buffer_tiles, resolved_buffer_sample)
     else:
         return jsonify({"success": "Invalid radio button value"}), 400
 

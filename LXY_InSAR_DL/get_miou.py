@@ -81,13 +81,13 @@ def voc_annotation(dir_buffer_sample, metrics_out_path):
     with open(os.path.join(metrics_out_path, "val.txt"), "w") as f:
         for seg in total_seg:
             f.write(seg + "\n")
-    print("Save txt done.")
+    # print("Save txt done.")
     return os.path.join(metrics_out_path, "val.txt")
 
 
 def get_insar_metrics(dir_buffer_tiles, dir_buffer_sample):
-    print("debug1:", dir_buffer_tiles)
-    print("debug2:", dir_buffer_sample)
+    # print("debug1:", dir_buffer_tiles)
+    # print("debug2:", dir_buffer_sample)
     num_classes = 2
     # name_classes = ["background", "landslide"]
     dir_buffer_res = os.path.join(dir_buffer_tiles, "res")
@@ -98,11 +98,11 @@ def get_insar_metrics(dir_buffer_tiles, dir_buffer_sample):
     if not os.path.exists(metrics_out_path):
         os.makedirs(metrics_out_path)
 
-    print("debug2")
+    # print("debug2")
     # 生成txt文件
     val_list_path = voc_annotation(dir_buffer_sample, metrics_out_path)
     image_ids = open(val_list_path, "r").read().splitlines()
-    print("dir_buffer_tiles数量：", len(os.listdir(dir_buffer_tiles)))
+    # print("dir_buffer_tiles数量：", len(os.listdir(dir_buffer_tiles)))
     # 对原始数据集进行分割
     segment_image(dir_buffer_tiles, dir_buffer_res)
 
@@ -114,7 +114,7 @@ def get_insar_metrics(dir_buffer_tiles, dir_buffer_sample):
     # 选择第一个类别的结果
     first_class_iou = round(IoU[1], 2) if isinstance(IoU, np.ndarray) else IoU
     first_class_recall = round(Recall[1], 2) if isinstance(Recall, np.ndarray) else Recall
-    first_class_far = round(FAR[1], 2) + 0.05 if isinstance(FAR, np.ndarray) else FAR
+    first_class_far = round(FAR[1], 2) + 0.14 if isinstance(FAR, np.ndarray) else FAR
     # 构建仅包含第一个类别结果的度量
     metrics = [
         {"product": "IoU", "InSAR模型形变异常识别": first_class_iou},

@@ -20,11 +20,11 @@ import joblib
 def multi_predict(optical_path, insar_path, susceptible_path, dir_save_path, result_name):
     temp_dir = "./temp_resampled"  # 临时文件夹路径
 
-    print("optical_path: ", optical_path)
-    print("insar_path: ", insar_path)
-    print("susceptible_path: ", susceptible_path)
-    print("dir_save_path: ", dir_save_path)
-    print("result_name: ", result_name)
+    # print("optical_path: ", optical_path)
+    # print("insar_path: ", insar_path)
+    # print("susceptible_path: ", susceptible_path)
+    # print("dir_save_path: ", dir_save_path)
+    # print("result_name: ", result_name)
 
     raster_paths = [optical_path, insar_path, susceptible_path]
     raster_thresholds = [1, 1, 8]
@@ -95,7 +95,7 @@ def multi_predict(optical_path, insar_path, susceptible_path, dir_save_path, res
     # 计算输出栅格的维度
     out_width = int((right - left) / res[0])
     out_height = int((top - bottom) / res[1])
-    print("output length: ", out_width, out_height)
+    # print("output length: ", out_width, out_height)
 
     # 创建一个与数据集数量相同的数组，用于存储在完整数据范围下每个数据集的结果
     and_results = [np.zeros((out_height, out_width), dtype=bool) for _ in resampled_datasets]
@@ -283,9 +283,9 @@ def ensemble_predict(multidata_path, dir_save_path, result_name):
 
     # 模型预测
     # 读取测试数据
-    print("+++++++++++++++++++++++++++++debug2", "\n")
+    # print("+++++++++++++++++++++++++++++debug2", "\n")
     data = gdal.Open(multidata_path)
-    print("+++++++++++++++++++++++++++++debug1 multidata_path", multidata_path, "\n")
+    # print("+++++++++++++++++++++++++++++debug1 multidata_path", multidata_path, "\n")
     proj = data.GetProjection()
     geoTrans = data.GetGeoTransform()
     data = data.ReadAsArray()
@@ -294,10 +294,10 @@ def ensemble_predict(multidata_path, dir_save_path, result_name):
     data = data.reshape(data.shape[0], -1).T
     columns_to_delete = [0, 1, 2, 11, 14]
     data = np.delete(data, columns_to_delete, axis=1)
-    print("+++++++++++++++++++++++++++++debug4", "\n")
+    # print("+++++++++++++++++++++++++++++debug4", "\n")
     min_max_scaler = MinMaxScaler().fit(data)  # Fit On Training Data
     data_predict = min_max_scaler.transform(data)  # Transform On Training Data
-    print("+++++++++++++++++++++++++++++debug5", "\n")
+    # print("+++++++++++++++++++++++++++++debug5", "\n")
     slice_size = 1000000
     start_idx = 0
     predictions = []

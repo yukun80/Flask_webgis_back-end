@@ -44,7 +44,7 @@ def fit_one_epoch(
     val_f_score = 0
 
     if local_rank == 0:
-        print("Start Train")
+        # print("Start Train")
         pbar = tqdm(total=epoch_step, desc=f"Epoch {epoch + 1}/{Epoch}", postfix=dict, mininterval=0.3)
     model_train.train()
     for iteration, batch in enumerate(gen):
@@ -144,8 +144,8 @@ def fit_one_epoch(
 
     if local_rank == 0:
         pbar.close()
-        print("Finish Train")
-        print("Start Validation")
+        # print("Finish Train")
+        # print("Start Validation")
         pbar = tqdm(total=epoch_step_val, desc=f"Epoch {epoch + 1}/{Epoch}", postfix=dict, mininterval=0.3)
 
     model_train.eval()
@@ -198,14 +198,14 @@ def fit_one_epoch(
         TrainName += "model"
         if not os.path.exists(os.path.join(save_dir, TrainName)):
             os.makedirs(os.path.join(save_dir, TrainName))
-        
+
         pbar.close()
-        print("Finish Validation")
+        # print("Finish Validation")
         # 在log_dir下创建一个名为TrainName的文件夹
         loss_history.append_loss(epoch + 1, total_loss / epoch_step, val_loss / epoch_step_val)
         eval_callback.on_epoch_end(epoch + 1, model_train)
-        print("Epoch:" + str(epoch + 1) + "/" + str(Epoch))
-        print("Total Loss: %.3f || Val Loss: %.3f " % (total_loss / epoch_step, val_loss / epoch_step_val))
+        # print("Epoch:" + str(epoch + 1) + "/" + str(Epoch))
+        # print("Total Loss: %.3f || Val Loss: %.3f " % (total_loss / epoch_step, val_loss / epoch_step_val))
 
         # -----------------------------------------------#
         #   保存权值
@@ -216,13 +216,12 @@ def fit_one_epoch(
                 os.path.join(
                     save_dir,
                     TrainName,
-                    "ep%03d-loss%.3f-val_loss%.3f.pth"
-                    % ((epoch + 1), total_loss / epoch_step, val_loss / epoch_step_val),
+                    "ep%03d-loss%.3f-val_loss%.3f.pth" % ((epoch + 1), total_loss / epoch_step, val_loss / epoch_step_val),
                 ),
             )
 
         if len(loss_history.val_loss) <= 1 or (val_loss / epoch_step_val) <= min(loss_history.val_loss):
-            print("Save best model to best_epoch_weights.pth")
+            # print("Save best model to best_epoch_weights.pth")
             # 保存最优模型，文件名为时间+模型名+epoch
             torch.save(model.state_dict(), os.path.join(save_dir, TrainName, "best_epoch_weights.pth"))
             # torch.save(model.state_dict(), os.path.join(save_dir, TrainName,  "best_epoch_weights.pth"))

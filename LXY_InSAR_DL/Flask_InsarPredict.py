@@ -50,7 +50,7 @@ def predict_main(dir_origin_path, dir_save_path, result_name="result"):
 
     img_names = os.listdir(dir_origin_path)
     for i in range(len(img_names)):
-        print("progress=%d" % (int(i / len(img_names) * 100)), flush=True)
+        # print("progress=%d" % (int(i / len(img_names) * 100)), flush=True)
         img_name = img_names[i]
         if img_name.lower().endswith((".tif", ".tiff")):
             image_path = os.path.join(dir_origin_path, img_name)
