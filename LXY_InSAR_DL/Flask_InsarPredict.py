@@ -39,10 +39,10 @@ def writeTiff(im_data, im_geotrans, im_proj, path):
 
 
 def predict_main(dir_origin_path, dir_save_path, result_name="result"):
-    print("检测函数成功进入1")
-    print(dir_origin_path)
-    print(dir_save_path)
-    print(result_name)
+    # print("检测函数成功进入1")
+    # print(dir_origin_path)
+    # print(dir_save_path)
+    # print(result_name)
     # clear_folder(dir_save_path)
     deeplab = DeeplabV3()
     count = False
@@ -57,7 +57,7 @@ def predict_main(dir_origin_path, dir_save_path, result_name="result"):
             dataset = readTif(image_path)
             width = dataset.RasterXSize
             height = dataset.RasterYSize
-            band = dataset.RasterCount
+            # band = dataset.RasterCount
             proj = dataset.GetProjection()
             geotrans = dataset.GetGeoTransform()
             gdal_array = dataset.ReadAsArray(0, 0, width, height)  # 获取数据

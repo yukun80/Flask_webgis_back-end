@@ -1,7 +1,3 @@
-# ----------------------------------------------------#
-#   将单张图片预测、摄像头检测和FPS测试功能
-#   整合到了一个py文件中，通过指定mode进行模式的修改。
-# ----------------------------------------------------#
 import numpy as np
 
 from optical_main_.UDtrans_prob import Unet
@@ -65,7 +61,7 @@ def writeTiff(im_data, im_geotrans, im_proj, path):
 
 def predict_main(dir_origin_path, dir_save_path):
     # clear_folder(dir_save_path)
-    
+
     count = False
     name_classes = ["background", "landslide"]
     unet = Unet()

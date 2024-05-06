@@ -1,14 +1,9 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
 from osgeo import gdal
-
-# import logging
-
 import rasterio
-import os
-
-
 from rasterio.windows import Window
 
 # from tqdm import tqdm
@@ -20,8 +15,9 @@ import Flask_geoserver
 import optical_main_.Flask_predict as Flask_predict
 import LXY_InSAR_DL.Flask_InsarPredict as Flask_InsarPredict
 import ensemble_ML.Flask_fusionDetection as Flask_fusionDetection
+from optical_main_.get_miou import get_optical_metrics
+from LXY_InSAR_DL.get_miou import get_insar_metrics
 
-# os.add_dll_directory(r"C:\\ProgramData\\anaconda3\\envs\\py310\\Library\\bin")
 Flask_app = Flask(__name__)
 CORS(Flask_app)
 # app = Flask(__name__)
@@ -151,7 +147,7 @@ def process_and_slice_images(file_paths, output_folder):
             # 为每个文件生成和堆叠切片
             blocks = [process_block(src, j, i, block_size) for src in src_files]
             combined_block = np.vstack(blocks)
-            combined_block = normalize_data(combined_block)  # 假设normalize_data函数已定义
+            # combined_block = normalize_data(combined_block)
             save_block(combined_block, profile_combined, i // block_size, j // block_size, output_folder)
 
 
@@ -477,6 +473,7 @@ def get_geojson():
         return jsonify({"error": "Failed to retrieve GeoJSON URL"}), 500
 
 
+# 删除数据库中的图层和存储仓库
 @Flask_app.route("/delete_data", methods=["POST"])
 def delete_data():
     layer_name = request.json.get("layer_name")
@@ -494,6 +491,28 @@ def delete_data():
         # 如果发生错误，返回错误信息
         print(e)  # 打印异常信息到控制台
         return jsonify({"error": str(e)}), 500
+
+
+# 获取定量评估指标
+@Flask_app.route("/get_metrics", methods=["POST"])
+def get_metrics():
+    data = request.json
+    radio1 = data["radio1"]
+    dir_buffer_tiles = data["dir_buffer_tiles"]
+    dir_buffer_sample = data["dir_buffer_sample"]
+    resolved_buffer_tiles = resolve_path(dir_buffer_tiles)
+    resolved_buffer_sample = resolve_path(dir_buffer_sample)
+    if radio1 == 1:
+        print("radio1:", radio1)
+        metrics = get_optical_metrics(resolved_buffer_tiles, resolved_buffer_sample)
+    elif radio1 == 2:
+        print("radio1:", radio1)
+        metrics = get_insar_metrics(resolved_buffer_tiles, resolved_buffer_sample)
+
+    else:
+        return jsonify({"success": "Invalid radio button value"}), 400
+
+    return jsonify({"metrics": metrics}), 200
 
 
 @Flask_app.route("/")
