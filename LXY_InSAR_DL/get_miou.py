@@ -115,7 +115,7 @@ def get_insar_metrics(dir_buffer_tiles, dir_buffer_sample):
     # 选择第一个类别的结果
     first_class_iou = round(IoU[1], 2) if isinstance(IoU, np.ndarray) else IoU
     first_class_recall = round(Recall[1], 2) if isinstance(Recall, np.ndarray) else Recall
-    first_class_far = round(FAR[1], 2) + 0.14 if isinstance(FAR, np.ndarray) else FAR
+    first_class_far = round(FAR[1] + 0.14, 2) if isinstance(FAR, np.ndarray) else FAR
     # 构建仅包含第一个类别结果的度量
     metrics = [
         {"product": "IoU", "InSAR模型形变异常识别": first_class_iou},

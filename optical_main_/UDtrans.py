@@ -20,7 +20,7 @@ class Unet(object):
         "backbone": "default",
         "input_shape": [256, 256],
         "mix_type": 1,
-        "cuda": True,
+        "cuda": False,
     }
 
     def __init__(self, **kwargs):

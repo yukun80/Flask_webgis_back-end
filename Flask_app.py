@@ -5,6 +5,7 @@ import numpy as np
 from osgeo import gdal
 import rasterio
 from rasterio.windows import Window
+import geopandas as gpd
 
 # from tqdm import tqdm
 import shutil
@@ -13,11 +14,15 @@ import Flask_tif2shp
 import Flask_res_tiles_merge
 import Flask_geoserver
 import optical_main_.Flask_predict as Flask_predict
-import LXY_InSAR_DL.Flask_InsarPredict as Flask_InsarPredict
-import ensemble_ML.Flask_fusionDetection as Flask_fusionDetection
 from optical_main_.get_miou import get_optical_metrics
+import LXY_InSAR_DL.Flask_InsarPredict as Flask_InsarPredict
 from LXY_InSAR_DL.get_miou import get_insar_metrics
-from ensemble_ML.get_miou import get_ensemble_metrics
+
+# import ensemble_ML.Flask_fusionDetection as Flask_fusionDetection
+# from ensemble_ML.get_miou import get_ensemble_metrics
+import ensemble_DL.ensemble_predict as Flask_ensemblePredict
+from ensemble_DL.get_miou import get_ensemble_metrics
+
 
 Flask_app = Flask(__name__)
 CORS(Flask_app)
@@ -118,6 +123,7 @@ def save_block(block, profile, x_idx, y_idx, folder):
         dst.write(block)
 
 
+# 堆叠切片
 def process_and_slice_images(file_paths, output_folder):
     # 检查文件夹是否存在，如果存在则创建一个新的文件夹
     if not os.path.exists(output_folder):
@@ -152,9 +158,39 @@ def process_and_slice_images(file_paths, output_folder):
             save_block(combined_block, profile_combined, i // block_size, j // block_size, output_folder)
 
 
+def process_stack_images(file_paths, output_folder, output_name="stacked_output.tif"):
+    if not os.path.exists(output_folder):
+        os.mkdir(output_folder)
+    clear_folder(output_folder)
+    # 同时打开保存在列表中
+    src_files = [rasterio.open(fp) for fp in file_paths]
+    shapes = [src.shape for src in src_files]
+    if not all(shape == shapes[0] for shape in shapes[1:]):
+        raise ValueError("Global dimensions must match among all files")
+
+    # 准备合并后的profile
+    profile_combined = src_files[0].profile.copy()
+    profile_combined.update(count=len(src_files) * profile_combined["count"])
+
+    # 堆叠src_files列表中的栅格数据
+    stacked_data = np.vstack([src.read() for src in src_files])
+
+    # 保存堆叠后的结果
+    output_path = os.path.join(output_folder, output_name)
+    with rasterio.open(output_path, "w", **profile_combined) as dst:
+        dst.write(stacked_data)
+
+    # 关闭所有打开的栅格文件
+    for src in src_files:
+        src.close()
+
+    print(f"Stacked image saved to {output_path}")
+
+
 # 设置工作目录
-PATH_MAP = {"/default": "D:\\_codeProject\\SlideDetect-main\\DataCollection\\7_System"}
-# PATH_MAP = {"/default": "D:\\DisasterWebSys\\DataStorage"}
+# PATH_MAP = {"/default": "D:\\_codeProject\\SlideDetect-main\\DataCollection\\7_System"}
+BASE_PATH = os.getenv("BASE_PATH", "D:\\DisasterWebSys")
+PATH_MAP = {"/default": BASE_PATH}
 
 
 def resolve_path(directory_path):
@@ -177,7 +213,10 @@ def list_paths():
         return jsonify({"error": "Directory does not exist"}), 404
     try:
         # 列出目录下的所有文件和文件夹
-        paths = [{"name": item, "isDir": os.path.isdir(os.path.join(directory_path, item))} for item in os.listdir(directory_path)]
+        paths = [
+            {"name": item, "isDir": os.path.isdir(os.path.join(directory_path, item))}
+            for item in os.listdir(directory_path)
+        ]
         # paths = list_files_recursive(directory_path)
         return jsonify(paths)
     except Exception as e:
@@ -209,10 +248,13 @@ def tif2shp_calculate():
     threshold = 0
     if tifType == "optical":
         threshold = 0.7
+        filter_area = 14000
     elif tifType == "insar":
         threshold = 62
+        filter_area = 2500
     elif tifType == "ensemble":
-        threshold = 7
+        threshold = 0.7
+        filter_area = 0
 
     if not tifImage or not res_folder:
         return jsonify({"error": "Missing required parameters"}), 400
@@ -231,7 +273,7 @@ def tif2shp_calculate():
         # print("+++++++++++++++debug3 result_path:", result_path, "\n")
         # print("+++++++++++++++debug4 threshold:", threshold, "\n")
         # 生成矢量边界
-        Flask_tif2shp.extract_and_sort_vector_boundary(resolved_tifImage, threshold, result_path, tifType)
+        Flask_tif2shp.extract_and_sort_vector_boundary(resolved_tifImage, threshold, result_path, tifType, filter_area)
 
         shp_name, extension = os.path.splitext(res_name)
         # print(shp_name + "_debug1")
@@ -246,7 +288,7 @@ def tif2shp_calculate():
         return jsonify({"error": str(e)}), 500
 
 
-# 影像标准化处理
+# 3.1 影像标准化处理
 @Flask_app.route("/process_images", methods=["GET"])
 def process_images():
     file_paths_str = request.args.get("file_paths")  # 遥感影像路径列表
@@ -281,6 +323,37 @@ def process_images():
     process_and_slice_images(resolved_file_paths, resolved_output_folder_path)
 
     return jsonify(results), 200
+
+
+# 3.2 多维数据拼接
+@Flask_app.route("/stack_images", methods=["GET"])
+def stack_images():
+    file_paths_str = request.args.get("file_paths")  # 遥感影像路径列表
+    output_folder_path = request.args.get("output_folder")  # 获取输出文件夹路径
+    result_name = request.args.get("res_name")  # 获取输出文件名
+
+    if not file_paths_str or not output_folder_path:
+        return jsonify({"error": "Missing required parameters"}), 400
+
+    # 使用逗号分隔的字符串获取文件路径数组
+    file_paths = file_paths_str.split(",")
+    # 使用resolve_path函数转换每个文件路径
+    resolved_file_paths = [resolve_path(path) for path in file_paths]
+    # 转换输出文件夹路径
+    resolved_output_folder_path = resolve_path(output_folder_path)
+
+    # 确保输出文件夹路径存在，若不存在可以选择创建
+    if not os.path.exists(resolved_output_folder_path):
+        os.makedirs(resolved_output_folder_path, exist_ok=True)
+
+    try:
+        process_stack_images(resolved_file_paths, resolved_output_folder_path, result_name)
+        return (
+            jsonify({"message": f"Stacked image saved to {os.path.join(resolved_output_folder_path, result_name)}"}),
+            200,
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # 光学检测
@@ -381,7 +454,61 @@ def predict_insar():
         return jsonify({"error": str(e)}), 500
 
 
+# 综合检测DL
+@Flask_app.route("/predict_ensemble", methods=["POST"])
+def predict_ensemble():
+    # 从前端获取路径
+    data = request.json
+    # 提取的变量名要与前端传递的一致
+    predict_tiles_path = data.get("optical_file")  # 从JSON体中获取
+    predict_res_path = data.get("res_folder")
+    result_name = data.get("res_name")
+    if not predict_tiles_path or not predict_res_path:
+        return jsonify({"error": "Missing required parameters"}), 400
+    try:
+        # 标准切片数据集路径
+        resolved_tiles_path = resolve_path(predict_tiles_path)
+        # 结果文件夹路径
+        resolved_res_path = resolve_path(predict_res_path)
+        # 临时文件夹保存推理切片
+        predict_tiles_path = os.path.join(resolved_res_path, "temp")
+        # 切片推理
+        Flask_ensemblePredict.predict_main(resolved_tiles_path, predict_tiles_path)
+        # 结果路径
+        result_path = os.path.join(resolved_res_path, result_name)
+        # 合并切片
+        Flask_res_tiles_merge.merge_tiles(predict_tiles_path, result_path, block_size)
+        # 清空临时文件夹
+        clear_folder(predict_tiles_path)
+        layer_name, extension = os.path.splitext(result_name)
+        print(layer_name + "_debug")
+        print(result_path + "_debug2")
+
+        (
+            store_status,
+            store_msg,
+            layer_status,
+            layer_msg,
+        ) = Flask_geoserver.upload_to_geoserver(result_path, layer_name, layer_name)
+        print(store_status, store_msg, layer_status, layer_msg)
+
+        # 指定图层样式
+        # 上传成功，指定样式1
+        # random_num = random.randint(1, 6)
+        random_num = 5
+        style_name = f"ResultStyle_{random_num}"
+        print("debug" + style_name)
+        style_status_code, style_msg = Flask_geoserver.assign_style_to_layer(layer_name, style_name)
+        print("style_status", style_status_code, style_msg)
+        # 返回成功响应
+        return jsonify({"message": "Success"}), 200
+    except Exception as e:
+        # 捕获异常并返回错误响应
+        return jsonify({"error": str(e)}), 500
+
+
 # 集成学习检测
+"""
 @Flask_app.route("/predict_multiResult", methods=["POST"])
 def predict_multiResult():
     data = request.json
@@ -428,6 +555,7 @@ def predict_multiResult():
     except Exception as e:
         # 捕获异常并返回错误响应
         return jsonify({"error": str(e)}), 500
+"""
 
 
 # 获取工作空间列表
@@ -498,23 +626,47 @@ def delete_data():
 def get_metrics():
     data = request.json
     radio1 = data["radio1"]
-    dir_buffer_tiles = data["dir_buffer_tiles"]
-    dir_buffer_sample = data["dir_buffer_sample"]
-    resolved_buffer_tiles = resolve_path(dir_buffer_tiles)
-    resolved_buffer_sample = resolve_path(dir_buffer_sample)
+    dir_res_tiles = data["dir_res_tiles"]
+    dir_sample = data["dir_vector_sample"]
+
+    resolved_vector_result = resolve_path(dir_res_tiles)
+    resolved_buffer_sample = resolve_path(dir_sample)
+
+    result_gdf = gpd.read_file(resolved_vector_result)
+    sample_gdf = gpd.read_file(resolved_buffer_sample)
+
+    # 计算相交情况
+    result_gdf["intersects"] = result_gdf.apply(lambda row: sample_gdf.intersects(row.geometry).any(), axis=1)
+    # 统计误报个数
+    false_alarms = result_gdf[~result_gdf["intersects"]].shape[0]
+    # 统计检测到的目标个数
+    detected_targets = result_gdf[result_gdf["intersects"]].shape[0]
+    # 计算误报率
+    false_alarm_rate = false_alarms / (false_alarms + detected_targets)
+    print(f"False Alarm Rate: {false_alarm_rate:.4f}")
+    """
     if radio1 == 1:
         print("radio1:", radio1)
-        metrics = get_optical_metrics(resolved_buffer_tiles, resolved_buffer_sample)
+        metrics = get_optical_metrics(resolved_vector_result, resolved_buffer_sample)
     elif radio1 == 2:
         print("radio1:", radio1)
-        metrics = get_insar_metrics(resolved_buffer_tiles, resolved_buffer_sample)
+        metrics = get_insar_metrics(resolved_vector_result, resolved_buffer_sample)
     elif radio1 == 3:
         print("radio1:", radio1)
-        metrics = get_ensemble_metrics(resolved_buffer_tiles, resolved_buffer_sample)
+        metrics = get_ensemble_metrics(resolved_vector_result, resolved_buffer_sample)
     else:
         return jsonify({"success": "Invalid radio button value"}), 400
-
-    return jsonify({"metrics": metrics}), 200
+    """
+    # 返回误报率和检测总数
+    return (
+        jsonify(
+            {
+                "false_alarm_rate": false_alarm_rate,
+                "total_detections": false_alarms + detected_targets,
+            }
+        ),
+        200,
+    )
 
 
 @Flask_app.route("/")

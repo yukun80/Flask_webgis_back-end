@@ -10,7 +10,7 @@ sorted_output_shapefile: 排序后的矢量输出路径
 """
 
 
-def extract_and_sort_vector_boundary(raster_path, threshold, sorted_output_shapefile, shp_class):
+def extract_and_sort_vector_boundary(raster_path, threshold, sorted_output_shapefile, shp_class, filter_area=0):
     # 打开栅格数据
     raster = gdal.Open(raster_path)
     band = raster.GetRasterBand(1)
@@ -76,11 +76,20 @@ def extract_and_sort_vector_boundary(raster_path, threshold, sorted_output_shape
     features = [(feature.Clone(), feature.GetField("Area_m^2")) for feature in layer]
     features.sort(key=lambda x: x[1], reverse=True)
 
+    print("Number of features:", len(features))
+    # 过滤掉面积小于1500的要素
+    filtered_features = [feature for feature in features if feature[1] >= filter_area]
+    print("Number of filtered features:", len(filtered_features))
+
     # 创建最终排序后的Shapefile
     if sorted_output_shapefile == "temp.shp":
         shp_driver.DeleteDataSource(sorted_output_shapefile)  # 如果输出路径与临时路径相同，先删除原文件
     final_output = shp_driver.CreateDataSource(sorted_output_shapefile)
-    final_layer = final_output.CreateLayer(sorted_output_shapefile, srs=layer.GetSpatialRef(), geom_type=layer.GetGeomType())
+    final_layer = final_output.CreateLayer(
+        sorted_output_shapefile,
+        srs=layer.GetSpatialRef(),
+        geom_type=layer.GetGeomType(),
+    )
 
     # 添加原有的字段
     layer_defn = layer.GetLayerDefn()
@@ -88,7 +97,7 @@ def extract_and_sort_vector_boundary(raster_path, threshold, sorted_output_shape
         final_layer.CreateField(layer_defn.GetFieldDefn(i))
 
     # 将排序后的features添加到新的layer
-    for feature, area in features:
+    for feature, area in filtered_features:
         final_layer.CreateFeature(feature)
 
     # 清理资源

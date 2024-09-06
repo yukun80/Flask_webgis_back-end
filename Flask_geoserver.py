@@ -25,6 +25,7 @@ def create_coveragestore(
     store_name,
     workspace="predict_result",
     geoserver_rest_url="http://localhost:8080/geoserver/rest",
+    # geoserver_rest_url="http://host.docker.internal:8080/geoserver/rest",
     username="admin",
     password="geoserver",
 ):
@@ -53,6 +54,7 @@ def assign_style_to_layer(
     style_name,
     workspace="predict_result",
     geoserver_rest_url="http://localhost:8080/geoserver/rest",
+    # geoserver_rest_url="http://host.docker.internal:8080/geoserver/rest",
     username="admin",
     password="geoserver",
 ):
@@ -74,6 +76,7 @@ def upload_to_geoserver(
     store_name,
     workspace="predict_result",
     geoserver_rest_url="http://localhost:8080/geoserver/rest",
+    # geoserver_rest_url="http://host.docker.internal:8080/geoserver/rest",
     username="admin",
     password="geoserver",
 ):
@@ -113,6 +116,7 @@ def upload_shapefile(
     shapefile_path,
     workspace="shapefile_result",
     geoserver_rest_url="http://localhost:8080/geoserver/rest",
+    # geoserver_rest_url="http://host.docker.internal:8080/geoserver/rest",
     username="admin",
     password="geoserver",
 ):
@@ -141,6 +145,7 @@ def upload_shapefile(
 def get_layers_from_workspace(
     workspace="predict_result",
     geoserver_rest_url="http://localhost:8080/geoserver/rest",
+    # geoserver_rest_url="http://host.docker.internal:8080/geoserver/rest",
     username="admin",
     password="geoserver",
 ):

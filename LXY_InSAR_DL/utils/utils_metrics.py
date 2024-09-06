@@ -61,7 +61,7 @@ def compute_metrics(gt_dir, pred_dir, png_name_list, num_classes, output_path=No
     FAR = (hist.sum(0) - np.diag(hist)) / np.maximum(hist.sum(0), 1)
 
     # 如果outpath不为空
-    if output_path is not None:
-        save_confusion_matrix(hist, output_path)
+    # if output_path is not None:
+    #     save_confusion_matrix(hist, output_path)
 
     return IoU, Recall, FAR

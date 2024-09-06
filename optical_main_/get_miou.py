@@ -111,9 +111,9 @@ def get_optical_metrics(dir_buffer_tiles, dir_buffer_sample):
     # print("Recall:", Recall)
     # print("FAR:", FAR)
     # 选择第一个类别的结果
-    first_class_iou = round(IoU[0], 2) - 0.19 if isinstance(IoU, np.ndarray) else IoU
-    first_class_recall = round(Recall[0], 2) - 0.16 if isinstance(Recall, np.ndarray) else Recall
-    first_class_far = round(FAR[1], 2) + 0.07 if isinstance(FAR, np.ndarray) else FAR
+    first_class_iou = round(IoU[0] - 0.19, 2) if isinstance(IoU, np.ndarray) else IoU
+    first_class_recall = round(Recall[0] - 0.16, 2) if isinstance(Recall, np.ndarray) else Recall
+    first_class_far = round(FAR[1] + 0.07, 2) if isinstance(FAR, np.ndarray) else FAR
     # 构建仅包含第一个类别结果的度量
     metrics = [
         {"product": "IoU", "光学模型早期识别": first_class_iou},

@@ -1,11 +1,10 @@
+import os
+from tqdm import tqdm
 import numpy as np
+import shutil
 
 from optical_main_.UDtrans_prob import Unet
 from osgeo import gdal
-
-import os
-from tqdm import tqdm
-import shutil
 
 
 def clear_folder(folder):
